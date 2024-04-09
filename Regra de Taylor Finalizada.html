@@ -1,0 +1,1812 @@
+---
+title: "Política Monetária via Regra de Taylor: Uma Análise do Brasil de 2003 a 2023"
+author: "Hercilio Almeida Barbosa"
+format: html
+editor: visual
+subtitle: |
+  \ **ECONOMETRIA - 2023.2** \
+  \ **Professor**: Sinézio Fernandes Maia \
+lang: pt
+date: 2024/04/09
+---
+
+```{=html}
+<style>
+p {
+  text-align: justify;
+}
+</style>
+```
+Durante anos, o Brasil lutou para conter a hiperinflação, que minava a estabilidade econômica e prejudicava o poder de compra da população. Segundo De Paula e Vieira (2022), após a adoção do regime de câmbio flutuante no final dos anos 1990, houve a necessidade de estabelecer um plano coeso para orientar a política monetária brasileira, visando alcançar a estabilidade dos preços no mercado. Diante desse cenário, em 1999, o país adotou uma importante mudança em sua condução monetária: o regime de metas de inflação. A adoção desse regime representou um marco fundamental na política econômica brasileira. Com essa nova abordagem, o Conselho Monetário Nacional (CMN) passou a estabelecer metas para a inflação de três anos à frente e o Banco Central do Brasil (BCB) a adotar medidas para alcançá-las. Em vista disso, apenas a antecipação da meta inflacionária não garante por si só a eficácia da política monetária no controle dos preços (Diniz & Maia, 2018).
+
+John Brian Taylor é conhecido por sua contribuição significativa para a teoria econômica, especialmente no campo da política monetária. Sua regra, frequentemente referida como a "Regra de Taylor", é uma abordagem influente para determinar a taxa de juros de curto prazo com o objetivo de estabilizar a economia. A criação da Regra de Taylor foi impulsionada pela necessidade de estabelecer um guia sistemático e transparente para a condução da política monetária. Taylor desenvolveu sua regra no início da década de 1990 como uma resposta aos desafios enfrentados pelos formuladores de políticas econômicas na época. Porém, a regra de Taylor não surge do nada, mesmo sendo diferentes há uma relação entre ela e a Teoria Quantitativa da Moeda e elas se entrelaçam em busca da estabilidade de preços, utilizando diferentes ferramentas para alcançar esse objetivo. De acordo com Taylor (1998), após alguns ajustes, a sua regra pode ser derivada da equação da TQM, também conhecida como equação das trocas:$$ MV = PY $$
+
+Essa equação demonstra que existe uma relação diretamente proporcional entre a quantidade de moeda em circulação $(M)$ e o nível geral de preços $(P)$. Em outras palavras, quanto mais moeda existir na economia, maior será a tendência de aumento dos preços, assumindo que a velocidade com que a moeda circula $(V)$ e o nível de produção real $(Y)$ são Interceptos nesta relação.
+
+Dessa forma, considerando um aumento Intercepto na oferta monetária e que a velocidade de circulação do dinheiro é influenciada pela taxa de juros nominal, esta última pode ser inserida na equação quantitativa. Ao isolar a taxa de juros, obtém-se: \$\$ i = \\pi\^\* +gy + h(\\pi - \\pi\^\*) + r\^\*\$\$
+
+onde, $i$ representa a taxa de juros de curto prazo; $\pi$ é a taxa de inflação; $\pi^*$ é a meta da taxa de inflação; $y$ é o hiato do produto; e, $r^∗$ é a taxa de juros real de equilíbrio. É evidente através dessa equação que a taxa de juros é determinada pelo nível de preços, especificamente, pelo desvio da inflação em relação à sua meta, além do produto real (Diniz & Maia, 2018).
+
+Diante do contexto apresentado, a política monetária brasileira passou por diversas mudanças ao longo dos últimos anos, buscando alcançar um ambiente macroeconômico estável e sustentável. Este estudo visa investigar a abordagem do Banco Central na política monetária, especialmente em relação à taxa básica de juros. Uma questão fundamental é se o Banco Central está adotando a taxa de juros conforme as teorias macroeconômicas ou se está implementando uma política monetária expansionista ou contracionista a depender do período analisado. Este trabalho tem como objetivo principal avaliar a aplicabilidade da Regra de Taylor à política monetária brasileira no período de 2003 a 2023, analisando as posturas das equipes econômicas divididas em 5 momentos, o primeiro sendo de 2003 a 2006, o segundo de 2007 a 2010, o terceiro de janeiro de 2011 a maio de 2016, outro de maio de 2016 até dezembro de 2018, e por fim, outro para os anos de 2019 a 2023. Para isso, serão utilizados dados reais da Selic acumulada em 12 meses, da inflação e do PIB, além de técnicas econométricas para estimar a regra de Taylor e realizar os de testes dos pressupostos de Mínimos Quadrados Ordinários(MQO). A relevância deste estudo reside em contribuir para a compreensão do papel da Regra de Taylor como guia para a política monetária brasileira. Além disso, esta análise permitirá identificar possíveis mudanças na postura do BCB ao longo do tempo,será feita uma comparação entre a taxa de juros estimada pelo modelo ajustado e a taxa de juros efetiva, em cada período, permitindo uma análise da condução da política monetária em diferentes contextos políticos e econômicos.
+
+
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#| 
+#carregando pacotes
+ library(tidyverse)
+ library(mFilter)
+ library(lmtest)
+ library(FinTS)
+ library(whitestrap)
+ library(tseries)
+ library(dynlm)
+ require(fBasics)
+ library(urca)
+library(dplyr)
+#setwd("C:/Users/herci/OneDrive/Documentos/Projetos R-Studio/Econometria/Dados")
+
+#evitar notação científica nos resultados da estatística descritiva 
+options(scipen = 9999)
+options(max.print = 100000)
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+
+#------Obtendo base de dados e transformando-as em séries temporais --------------
+
+selic <- read.table("selic12.txt",head=T)
+pibR <- read.table("pibR.txt",head=T)
+meta <- read.table("meta.txt",head=T)
+ipca <- read.table("ipca.txt", head=T)
+
+selic <- ts(selic, frequency = 12, start = c(2003,1), end = c(2023,12))
+pib <- ts(pibR, frequency = 12, start = c(2003,1), end = c(2023,12))
+meta <- ts(meta, frequency = 12, start = c(2003,1), end = c(2023,12))
+ipca <- ts(ipca, frequency = 12, start = c(2003,1), end = c(2023,12))
+
+Dados <- cbind(selic, pib, ipca, meta)
+#plot(Dados)
+#knitr::kable(Dados)
+
+#----------------------- Hiato do Produto --------------------------------------
+
+Pib.hp<-hpfilter(na.omit(pib, type='lambda', freq=14400))
+hiato<-Pib.hp$cycle
+hiato<-hiato/pib*100
+hiato<-ts(hiato,frequency=12,start=c(2003,1),end=c(2023,12))
+#plot(hiato, main = "Hiato do Produto")
+#abline(h =0, col = "red")
+
+#----------------------- Desvio Inflação -----------------------------------------
+
+desvio <- ipca - meta
+
+#plot(desvio)
+
+DadosTaylor <- cbind(selic, hiato, desvio)
+#plot(DadosTaylor)
+#knitr::kable(DadosTaylor)
+
+```
+
+#### Período 1 (2003.1 até 2006)
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+### ----------------------- Definindo Períodos ------------------------------------
+
+selicL1 <- window(selic, frequency=12, start=c(2003,1), end=c(2006,12))
+
+desvioL1 <- window(desvio, frequency=12, start=c(2003,1), end=c(2006,12))
+
+hiatoL1 <- window(hiato, frequency=12, start=c(2003,1), end=c(2006,12))
+
+ipcaL1 <- window(ipca, frequency=12, start=c(2003,1), end=c(2006,12))
+
+taylorL1 <- cbind(selicL1 , desvioL1 ,hiatoL1 );#plot(taylorL1)
+
+###----------------------- Regressão ---------------------------------------------
+
+TaylorL1 = lm(selicL1~desvioL1 +hiatoL1 )
+
+#coeftest(TaylorL1)
+#summary(TaylorL1)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+  # ----------------------- Residuos ---------------------------------------------
+  residuos1 <- residuals(TaylorL1)
+  
+  
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+  require(fBasics)
+  jarquebera1 <- jarqueberaTest(residuos1)
+  
+ 
+  shapiro1 <- shapiro.test(residuos1)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+
+  fraction1 <- length(residuos1) * 0.15
+  
+  gqtest1 <- gqtest(TaylorL1, fraction = fraction1, alternative = "greater")
+  
+  bptest1 <- bptest(TaylorL1)
+  
+  
+  white_test1 <- white_test(TaylorL1)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest1 <- dwtest(TaylorL1)
+  
+  ArchTest1 <- ArchTest(residuos1, lags = 4)
+  
+  
+  Box.test1 <- Box.test(residuos1, lag = 12, type = "Box-Pierce")
+
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+
+
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Exibindo os resultados
+  
+# Criar os dados
+testes_L1 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera1@test$statistic, 4), 
+                  round(shapiro1$statistic, 4), round(gqtest1$statistic, 4),
+                  round(bptest1$statistic, 4), round(white_test1$w_stat, 4),
+                  round(dwtest1$statistic, 4), round(ArchTest1$statistic, 4),
+                  round(Box.test1$statistic, 4)),
+  P_valor = c(round(jarquebera1@test$p.value, 4), round(shapiro1$p.value, 4), 
+              round(gqtest1$p.value, 4), round(bptest1$p.value, 4), 
+              round(white_test1$p_value, 4), round(dwtest1$p.value, 4), 
+              round(ArchTest1$p.value, 4), round(Box.test1$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(testes_L1, align = "l", caption = "<b>Tabela 1: Testes de Normalidade, Heterocedasticidade e Autocorrelação com os dados originais</b>", format = "html")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#2.1 APLICANDO DIFERENÇA E DEFASAGEM NA Período LULA --------------------
+
+
+# --------------------Regressão ------------------------------------------------
+lag <- stats::lag
+regressao_diff1 <- dynlm(selicL1~diff(desvioL1)+diff(hiatoL1)+lag(selicL1,1)
+                         +lag(selicL1,2))
+
+#summary(regressao_diff1)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ----------------------- Residuos ---------------------------------------------
+residuos_diff1<-residuals(regressao_diff1)
+
+
+# ---------------------- Testes de normalidade ---------------------------------
+  
+jarquebera_diff1 <- jarqueberaTest(residuos_diff1)
+  
+shapiro_diff1 <-shapiro.test(residuos_diff1)
+  
+  
+# ------------------ Testes de heterocedasticidade -----------------------------
+  
+
+fraction_diff1 <- length(residuos_diff1)*0.15
+  
+gqtest_diff1<-gqtest(regressao_diff1, fraction=fraction_diff1, alternative = "greater")
+  
+bptest_diff1<-bptest(regressao_diff1)
+  
+white_test_diff1 <-white_test(regressao_diff1)
+  
+#------------------ Testes de autocorrelação -----------------------------------
+  
+dwtest_diff1 <-dwtest(regressao_diff1); 
+  
+ArchTest_diff1 <-ArchTest(residuos_diff1, lags = 4)
+  
+Box.test_diff1 <-Box.test(residuos_diff1, lag=12, type="Box-Pierce")
+  
+  
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+
+# Exibindo os resultados
+  
+# Criar os dados
+test_econ_diff1 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera_diff1@test$statistic, 4), 
+                  round(shapiro_diff1$statistic, 4), round(gqtest_diff1$statistic, 4),
+                  round(bptest_diff1$statistic, 4), round(white_test_diff1$w_stat, 4),
+                  round(dwtest_diff1$statistic, 4), round(ArchTest_diff1$statistic, 4),
+                  round(Box.test_diff1$statistic, 4)),
+  P_valor = c(round(jarquebera_diff1@test$p.value, 4), round(shapiro_diff1$p.value, 4), 
+              round(gqtest_diff1$p.value, 4), round(bptest_diff1$p.value, 4), 
+              round(white_test_diff1$p_value, 4), round(dwtest_diff1$p.value, 4), 
+              round(ArchTest_diff1$p.value, 4), round(Box.test_diff1$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(test_econ_diff1, align = "l", caption = "<b>Tabela 2: Testes de Normalidade, Heterocedasticidade e Autocorrelação pelo modelo ajustado</b>", format = "html")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# Executar o modelo
+resultado_diff1 <- summary(regressao_diff1)
+
+# Extrair coeficientes e estatísticas
+coeficientes_diff1 <- resultado_diff1$coefficients[, 1]
+t_stats_diff1 <- resultado_diff1$coefficients[, 3]
+R2_diff1 <- resultado_diff1$r.squared
+
+# Arredondar coeficientes e estatísticas para 4 casas decimais
+coeficientes_diff1 <- round(coeficientes_diff1, 4)
+t_stats_diff1 <- round(t_stats_diff1, 4)
+R2_diff1 <- round(R2_diff1, 4)
+
+# Criar um data frame com os coeficientes e as estatísticas
+dados_diff1 <- data.frame(
+
+  Regra_de_Taylor = c("<b>Parâmetros<b>", "<b>t-student<b>", "", ""),
+  
+  Intercepto = c(coeficientes_diff1[1], 
+                paste("(", t_stats_diff1[1], ")", sep = ""), 
+                NA, NA),
+  
+  Desvio = c(coeficientes_diff1[2], paste("(", t_stats_diff1[2], ")", sep = ""),
+             NA, NA),
+  
+  
+  Hiato = c(coeficientes_diff1[3], paste("(", t_stats_diff1[3], ")", sep = ""), 
+            NA, NA),
+  
+  SELIC_em_t1 = c(coeficientes_diff1[4], paste("(", t_stats_diff1[4], ")", sep = ""), NA, NA),
+  
+  Selic_em_t2 = c(coeficientes_diff1[5], paste("(", t_stats_diff1[5], ")", sep = ""), NA, NA),
+  
+  
+  R2 = c("", "", paste("(", R2_diff1, ")", sep = ""), "")
+)
+
+
+dados_diff1[is.na(dados_diff1)] <- ""
+# Exibir a tabela
+knitr::kable(dados_diff1, align = "c", caption = "<b>Tabela 1: Parâmetros estimados pelo modelo ajustado</b>", format = "markdown")
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+selicL1_lag1 <- lag(selicL1, 1)
+selicL1_lag2 <- lag(selicL1, 2)
+selicL1_lag3 <- lag(selicL1, 3)
+
+SELICTaylorL1 <- (coef(regressao_diff1)[1] + coef(regressao_diff1)[2]*desvioL1
+                  +coef(regressao_diff1)[3]*hiatoL1 + coef(regressao_diff1)[4]*selicL1_lag1
+                  +coef(regressao_diff1)[5]*selicL1_lag2)
+
+SELICTaylorL1 <- round(SELICTaylorL1,2)
+
+
+
+
+variação_selicL1 <- round(selicL1 - SELICTaylorL1, 2)
+
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff1 <- SELICTaylorL1[1:12]
+ano2_diff1 <- SELICTaylorL1[13:24]
+ano3_diff1 <- SELICTaylorL1[25:36]
+ano4_diff1 <- SELICTaylorL1[37:45]
+
+# criando um data frame com os valores divididos
+valores_diff1 <- data.frame(Selic2003 = ano1_diff1,
+                          Selic2004 = ano2_diff1,
+                          Selic2005 = ano3_diff1,
+                          Selic2006 = c(ano4_diff1, "  ", "  ", "   ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff1 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff1) <- nomes_linhas_diff1
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff1) <- c("<b>2003</b>", "<b>2004</b>", "<b>2005</b>", "<b>2006</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff1) <- gsub("Selic", "", colnames(valores_diff1))
+
+# Exibir o data frame
+df_diff1 <- t(valores_diff1)
+knitr::kable(df_diff1,align = "c", caption = "<b>Tabela 2: Taxa Selic determinada pelo modelo ajustado</b>", format = "markdown")
+
+
+#GERANDO TABELA DE VARIAÇÃO
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff1 <- variação_selicL1[1:12]
+ano2_diff1 <- variação_selicL1 [13:24]
+ano3_diff1 <- variação_selicL1[25:36]
+ano4_diff1 <- variação_selicL1[37:45]
+
+# criando um data frame com os valores divididos
+valores_diff1 <- data.frame(Selic2003 = ano1_diff1,
+                          Selic2004 = ano2_diff1,
+                          Selic2005 = ano3_diff1,
+                          Selic2006 = c(ano4_diff1, "  ", "  ", "   ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff1 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff1) <- nomes_linhas_diff1
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff1) <- c("<b>2003</b>", "<b>2004</b>", "<b>2005</b>", "<b>2006</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff1) <- gsub("Selic", "", colnames(valores_diff1))
+
+# Exibir o data frame
+df_diff1 <- t(valores_diff1)
+knitr::kable(df_diff1,align = "c", caption = "<b>Tabela 3: Selic efetiva menos Selic do modelo ajustado</b>", format = "markdown")
+
+```
+
+
+
+#### Período 2 (2007 até 2010)
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#2. Período LULA 2003.1 ATÉ 2010.12 ---------------------------------------------
+#2.1----
+### ----------------------- Definindo Períodos ------------------------------------
+
+selicL2 <- window(selic, frequency=12, start=c(2007,1), end=c(2010,12))
+
+desvioL2 <- window(desvio, frequency=12, start=c(2007,1), end=c(2010,12))
+
+hiatoL2 <- window(hiato, frequency=12, start=c(2007,1), end=c(2010,12))
+
+taylorL2 <- cbind(selicL2 , desvioL2 ,hiatoL2 );#plot(taylorL2)
+
+
+###----------------------- Regressão ---------------------------------------------
+
+Taylor2 = lm(selicL2~desvioL2 +hiatoL2 )
+##coef(Taylor2)
+
+#coeftest(Taylor2)
+#summary(Taylor2)
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+# Executar o modelo
+resultadoL2 <- summary(Taylor2)
+
+# Extrair coeficientes e estatísticas
+coeficientesL2 <- resultadoL2$coefficients[, 1]
+t_statsL2 <- resultadoL2$coefficients[, 3]
+
+# Arredondar coeficientes e estatísticas para 4 casas decimais
+coeficientesL2 <- round(coeficientesL2, 4)
+t_statsL2 <- round(t_statsL2, 4)
+R2L2 <- round(resultadoL2$r.squared, 4)
+
+# Criar um data frame com os coeficientes e as estatísticas
+dadosL2 <- data.frame(
+  
+  Regra_de_Taylor = c("<b>Parâmetros<b>", "<b>t-student<b>", "", ""),
+  
+  Intercepto = c(coeficientesL2[1], paste("(", t_statsL2[1], ")", sep = ""), 
+                NA, NA),
+  
+  Desvio = c(coeficientesL2[2], paste("(", t_statsL2[2], ")", sep = ""),
+             NA, NA),
+  
+  Hiato = c(coeficientesL2[3], paste("(", t_statsL2[3], ")", sep = ""), 
+            NA, NA),
+  
+  R2 = c("", "", paste("(", R2L2, ")", sep = ""), "")
+)
+
+
+
+dadosL2[is.na(dadosL2)] <- ""
+# Exibir a tabela
+knitr::kable(dadosL2, align = "c", caption = "<b>Parâmetros Estimados com os dados originais</b>", format = "markdown")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+  
+  # ----------------------- Residuos ---------------------------------------------
+  residuos2 <- residuals(Taylor2)
+ 
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+  jarquebera2 <- jarqueberaTest(residuos2)
+  
+  shapiro2 <- shapiro.test(residuos2)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+
+  fraction2 <- length(residuos2) * 0.15
+  
+  gqtest2 <- gqtest(Taylor2, fraction = fraction2, alternative = "greater")
+  
+  bptest2 <- bptest(Taylor2)
+  
+  
+  white_test2 <- white_test(Taylor2)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest2 <- dwtest(Taylor2)
+  
+  ArchTest2 <- ArchTest(residuos2, lags = 4)
+  
+  
+  Box.test2 <- Box.test(residuos2, lag = 12, type = "Box-Pierce")
+  
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Exibindo os resultados
+  
+# Criar os dados
+testes_L2 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera2@test$statistic, 4), 
+                  round(shapiro2$statistic, 4), round(gqtest2$statistic, 4),
+                  round(bptest2$statistic, 4), round(white_test2$w_stat, 4),
+                  round(dwtest2$statistic, 4), round(ArchTest2$statistic, 4),
+                  round(Box.test2$statistic, 4)),
+  P_valor = c(round(jarquebera2@test$p.value, 4), round(shapiro2$p.value, 4), 
+              round(gqtest2$p.value, 4), round(bptest2$p.value, 4), 
+              round(white_test2$p_value, 4), round(dwtest2$p.value, 4), 
+              round(ArchTest2$p.value, 4), round(Box.test2$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(testes_L2, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação com os dados originais</b>", format = "html")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+#2.1 APLICANDO DIFERENÇA E DEFASAGEM NA Período LULA --------------------
+
+
+# --------------------Regressão ------------------------------------------------
+lag <- stats::lag
+regressao_diff2 <- dynlm(selicL2~diff(desvioL2)+diff(hiatoL2,)+lag(selicL2,1)+lag(selicL2,2))
+
+#summary(regressao_diff2)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ----------------------- Residuos ---------------------------------------------
+residuos_diff2<-residuals(regressao_diff2)
+
+
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+ 
+  jarquebera_diff2 <- jarqueberaTest(residuos_diff2)
+  
+  shapiro_diff2 <-shapiro.test(residuos_diff2)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+ 
+  fraction_diff2 <- length(residuos_diff2)*0.15
+  
+  gqtest_diff2<-gqtest(regressao_diff2, fraction=fraction_diff2, alternative = "greater")
+  
+  bptest_diff2<-bptest(regressao_diff2)
+  
+  
+  white_test_diff2 <-white_test(regressao_diff2)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest_diff2 <-dwtest(regressao_diff2)
+  
+  ArchTest_diff2 <-ArchTest(residuos_diff2, lags = 4)
+  
+  
+  Box.test_diff2 <-Box.test(residuos_diff2, lag=12, type="Box-Pierce")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Criar os dados
+test_econ_diff2 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera_diff2@test$statistic, 4), 
+                  round(shapiro_diff2$statistic, 4), round(gqtest_diff2$statistic, 4),
+                  round(bptest_diff2$statistic, 4), round(white_test_diff2$w_stat, 4),
+                  round(dwtest_diff2$statistic, 4), round(ArchTest_diff2$statistic, 4),
+                  round(Box.test_diff2$statistic, 4)),
+  P_valor = c(round(jarquebera_diff2@test$p.value, 4), round(shapiro_diff2$p.value, 4), 
+              round(gqtest_diff2$p.value, 4), round(bptest_diff2$p.value, 4), 
+              round(white_test_diff2$p_value, 4), round(dwtest_diff2$p.value, 4), 
+              round(ArchTest_diff2$p.value, 4), round(Box.test_diff2$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(test_econ_diff2, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação pelo modelo ajustado</b>", format = "html")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# Executar o modelo
+resultado_diff2 <- summary(regressao_diff2)
+
+# Extrair coeficientes e estatísticas
+coeficientes_diff2 <- resultado_diff2$coefficients[, 1]
+t_stats_diff2 <- resultado_diff2$coefficients[, 3]
+
+# Arredondar coeficientes e estatísticas para 4 casas decimais
+coeficientes_diff2 <- round(coeficientes_diff2, 4)
+t_stats_diff2 <- round(t_stats_diff2, 4)
+R2_diff2 <- round(resultado_diff2$r.squared, 4)
+
+# Criar um data frame com os coeficientes e as estatísticas
+dados_diff2 <- data.frame(
+  
+  Regra_de_Taylor = c("<b>Parâmetros<b>", "<b>t-student<b>", "", ""),
+  
+  Intercepto = c(coeficientes_diff2[1], paste("(", t_stats_diff2[1], ")", sep = ""), 
+                NA, NA),
+  
+  Desvio = c(coeficientes_diff2[2], paste("(", t_stats_diff2[2], ")", sep = ""),
+             NA, NA),
+  
+  Hiato = c(coeficientes_diff2[3], paste("(", t_stats_diff2[3], ")", sep = ""), 
+            NA, NA),
+  
+  SELIC_em_t1 = c(coeficientes_diff2[4], paste("(", t_stats_diff2[4], ")", sep = ""), 
+                 NA, NA),
+  
+  Selic_em_t2 = c(coeficientes_diff2[5], paste("(", t_stats_diff2[5], ")", sep = ""), NA, NA),
+  
+  
+  R2 = c("", "", paste("(", R2_diff2, ")", sep = ""), "")
+)
+
+
+
+dados_diff2[is.na(dados_diff2)] <- ""
+# Exibir a tabela
+knitr::kable(dados_diff2, align = "c", caption = "<b>Tabela 4: Parâmetros Estimados pelo modelo ajustado</b>", format = "markdown")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+selicL2_lag1 <- lag(selicL2, 1)
+selicL2_lag2 <- lag(selicL2, 2)
+selicL2_lag3 <- lag(selicL2, 3)
+
+SELICTaylorL2 <- (coef(regressao_diff2)[1] + coef(regressao_diff2)[2]*desvioL2
+                  +coef(regressao_diff2)[3]*hiatoL2 + coef(regressao_diff2)[4]*selicL2_lag1
+                  +coef(regressao_diff2)[5]*selicL2_lag2)
+
+SELICTaylorL2 <- round(SELICTaylorL2,2)
+
+
+variação_selicL2 <- round(selicL2 - SELICTaylorL2, 2)
+
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff2 <- SELICTaylorL2[1:12]
+ano2_diff2 <- SELICTaylorL2[13:24]
+ano3_diff2 <- SELICTaylorL2[25:36]
+ano4_diff2 <- SELICTaylorL2[37:45]
+
+# criando um data frame com os valores divididos
+valores_diff2 <- data.frame(Selic2007 = ano1_diff2,
+                          Selic2008 = ano2_diff2,
+                          Selic2009 = ano3_diff2,
+                          Selic2010 = c(ano4_diff2, "  ", "  ", "   ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff2 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff2) <- nomes_linhas_diff2
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff2) <- c("<b>2007</b>", "<b>2008</b>", "<b>2009</b>", "<b>2010</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff2) <- gsub("Selic", "", colnames(valores_diff2))
+
+# Exibir o data frame
+df_diff2 <- t(valores_diff2)
+knitr::kable(df_diff2,align = "c", caption = "<b>Tabela 5: Taxa Selic determinada pelo modelo ajustado</b>", format = "markdown")
+
+
+#GERANDO TABELA DE VARIAÇÃO
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff2 <- variação_selicL2[1:12]
+ano2_diff2 <- variação_selicL2 [13:24]
+ano3_diff2 <- variação_selicL2[25:36]
+ano4_diff2 <- variação_selicL2[37:45]
+
+# criando um data frame com os valores divididos
+valores_diff2 <- data.frame(Selic2007 = ano1_diff2,
+                          Selic2008 = ano2_diff2,
+                          Selic2009 = ano3_diff2,
+                          Selic2010 = c(ano4_diff2, "  ", "  ", "   ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff2 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+row.names(valores_diff2) <- nomes_linhas_diff2
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff2) <- c("<b>2007</b>", "<b>2008</b>", "<b>2009</b>", "<b>2010</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff2) <- gsub("Selic", "", colnames(valores_diff2))
+
+# Exibir o data frame
+df_diff2 <- t(valores_diff2)
+knitr::kable(df_diff2,align = "c", caption = "<b>Tabela 6: Selic efetiva menos Selic do modelo ajustado</b>", format = "markdown")
+
+
+
+
+```
+
+
+
+#### Período 3 (2011 até 2016.5)
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ------------------------ Definindo Períodos -----------------------------------
+
+selicD <- window(selic, frequency=12, start=c(2011,1), end=c(2016,5));#selicD;#plot(selicD)
+
+desvioD <- window(desvio, frequency=12, start=c(2011,1), end=c(2016,5));#desvioD;#plot(desvioD)
+
+hiatoD <- window(hiato, frequency=12, start=c(2011,1), end=c(2016,5));#hiatoD;#plot(hiatoD)
+
+
+# ----------------------- Regra de Taylor --------------------------------------
+
+taylorD <- cbind(selicD , desvioD ,hiatoD); #taylorD ; #plot(taylorD)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+Taylor3 <- lm(selicD~desvioD+hiatoD)
+
+
+#coeftest(Taylor3)
+#summary(Taylor3)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+  # ----------------------- Residuos ---------------------------------------------
+  residuos3 <- residuals(Taylor3)
+  
+  
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+
+  jarquebera3 <- jarqueberaTest(residuos3)
+  
+ 
+  shapiro3 <- shapiro.test(residuos3)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+ 
+  fraction3 <- length(residuos3) * 0.15
+  
+  gqtest3 <- gqtest(Taylor3, fraction = fraction3, alternative = "greater")
+  
+  bptest3 <- bptest(Taylor3)
+  
+  
+  white_test3 <- white_test(Taylor3)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest3 <- dwtest(Taylor3)
+  
+  ArchTest3 <- ArchTest(residuos3, lags = 4)
+  
+  
+  Box.test3 <- Box.test(residuos3, lag = 12, type = "Box-Pierce")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Exibindo os resultados
+  
+# Criar os dados
+testes_L3 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera3@test$statistic, 4), 
+                  round(shapiro3$statistic, 4), round(gqtest3$statistic, 4),
+                  round(bptest3$statistic, 4), round(white_test3$w_stat, 4),
+                  round(dwtest3$statistic, 4), round(ArchTest3$statistic, 4),
+                  round(Box.test3$statistic, 4)),
+  P_valor = c(round(jarquebera3@test$p.value, 4), round(shapiro3$p.value, 4), 
+              round(gqtest3$p.value, 4), round(bptest3$p.value, 4), 
+              round(white_test3$p_value, 4), round(dwtest3$p.value, 4), 
+              round(ArchTest3$p.value, 4), round(Box.test3$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(testes_L3, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação com os dados originais</b>", format = "html")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ----------------------- Regressão --------------------------------------------
+lag <- stats::lag
+regressao_diff3 <- dynlm(selicD~diff(desvioD)+diff(desvioD)+diff(hiatoD)+lag(selicD,1)+lag(selicD,2)+lag(selicD,3))
+
+#summary(regressao_diff3)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+  # ----------------------- Residuos ---------------------------------------------
+  residuos_diff3<-residuals(regressao_diff3)
+
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+ 
+  jarquebera_diff3 <- jarqueberaTest(residuos_diff3)
+  
+
+  shapiro_diff3 <-shapiro.test(residuos_diff3)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+  
+  fraction_diff3 <- length(residuos_diff3)*0.15
+  
+  gqtest_diff3<-gqtest(regressao_diff3, fraction=fraction_diff3, alternative = "greater")
+  
+  bptest_diff3<-bptest(regressao_diff3)
+  
+  
+  white_test_diff3 <-white_test(regressao_diff3)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest_diff3 <-dwtest(regressao_diff3)
+  
+  ArchTest_diff3 <-ArchTest(residuos_diff3, lags = 4)
+  
+  
+  Box.test_diff3 <-Box.test(residuos_diff3, lag=12, type="Box-Pierce")
+  
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+  # Exibindo os resultados
+  
+ # Criar os dados
+test_econ_diff3 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera_diff3@test$statistic, 4), 
+                  round(shapiro_diff3$statistic, 4), round(gqtest_diff3$statistic, 4),
+                  round(bptest_diff3$statistic, 4), round(white_test_diff3$w_stat, 4),
+                  round(dwtest_diff3$statistic, 4), round(ArchTest_diff3$statistic, 4),
+                  round(Box.test_diff3$statistic, 4)),
+  P_valor = c(round(jarquebera_diff3@test$p.value, 4), round(shapiro_diff3$p.value, 4), 
+              round(gqtest_diff3$p.value, 4), round(bptest_diff3$p.value, 4), 
+              round(white_test_diff3$p_value, 4), round(dwtest_diff3$p.value, 4), 
+              round(ArchTest_diff3$p.value, 4), round(Box.test_diff3$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(test_econ_diff3, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação pelo modelo ajustado</b>", format = "html")
+  
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+# Executar o modelo
+resultado_diff3 <- summary(regressao_diff3)
+
+# Extrair coeficientes e estatísticas
+coeficientes_diff3 <- resultado_diff3$coefficients[, 1]
+t_stats_diff3 <- resultado_diff3$coefficients[, 3]
+
+# Arredondar coeficientes e estatísticas para 4 casas decimais
+coeficientes_diff3 <- round(coeficientes_diff3, 4)
+t_stats_diff3 <- round(t_stats_diff3, 4)
+R2_diff3 <- round(resultado_diff3$r.squared, 4)
+
+# Criar um data frame com os coeficientes e as estatísticas
+dados_diff3 <- data.frame(
+  
+  Regra_de_Taylor = c("<b>Parâmetros<b>", "<b>t-student<b>", "", ""),
+  
+  Intercepto = c(coeficientes_diff3[1], paste("(", t_stats_diff3[1], ")", sep = ""),NA, NA),
+  
+  Desvio = c(coeficientes_diff3[2], paste("(", t_stats_diff3[2], ")", sep = ""),NA, NA),
+  
+  Hiato = c(coeficientes_diff3[3], paste("(", t_stats_diff3[3], ")", sep = ""),NA, NA),
+  
+  SELIC_em_t1 = c(coeficientes_diff3[4], paste("(", t_stats_diff3[4], ")", sep = ""),NA, NA),
+  
+  SELIC_em_t2 = c(coeficientes_diff3[5], paste("(", t_stats_diff3[5], ")", sep = ""), NA, NA),
+  
+  SELIC_em_t3 = c(coeficientes_diff3[6], paste("(", t_stats_diff3[6], ")", sep = ""),NA, NA),
+ 
+  R2 = c("", "", paste("(", R2_diff3, ")", sep = ""), NA)
+)
+
+
+dados_diff3[is.na(dados_diff3)] <- ""
+# Exibir a tabela
+knitr::kable(dados_diff3, align = "c", caption = "<b>Tabela 7: Parâmetros Estimados pelo modelo ajustado</b>", format = "markdown")
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+selicD_lag1 <- lag(selicD, 1)
+selicD_lag2 <- lag(selicD, 2)
+selicD_lag3 <- lag(selicD, 3)
+
+SELICTaylorD <- (coef(regressao_diff3)[1] + coef(regressao_diff3)[2]*desvioD
+                  +coef(regressao_diff3)[3]*hiatoD + coef(regressao_diff3)[4]*selicD_lag1
+                  +coef(regressao_diff3)[5]*selicD_lag2+coef(regressao_diff3)[6]*selicD_lag3)
+
+SELICTaylorD <- round(SELICTaylorD,2)
+
+variação_selicD <- round(selicD - SELICTaylorD, 2)
+
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff3 <- SELICTaylorD[1:12]
+ano2_diff3 <- SELICTaylorD[13:24]
+ano3_diff3 <- SELICTaylorD[25:36]
+ano4_diff3 <- SELICTaylorD[37:48]
+ano5_diff3 <- SELICTaylorD[49:60]
+ano6_diff3 <- SELICTaylorD[61:62]
+
+# criando um data frame com os valores divididos
+valores_diff3 <- data.frame(Selic2011 = ano1_diff3,
+                          Selic2012 = ano2_diff3,
+                          Selic2013 = ano3_diff3,
+                          Selic2014 = ano4_diff3,
+                          Selic2015 = ano5_diff3,
+                          Selic2016 = c(ano6_diff3, " "," "," "," "," "," "," "," "," "," ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff3 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff3) <- nomes_linhas_diff3
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff3) <- c("<b>2011</b>", "<b>2012</b>", "<b>2013</b>", "<b>2014</b>","<b>2015</b>","<b>2016</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff3) <- gsub("Selic", "", colnames(valores_diff3))
+
+# Exibir o data frame
+df_diff3 <- t(valores_diff3)
+knitr::kable(df_diff3,align = "c", caption = "<b>Tabela 8: Taxa Selic determinada pelo modelo ajustado</b>", format = "markdown")
+
+
+#GERANDO TABELA DE VARIAÇÃO
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff3 <- variação_selicD[1:12]
+ano2_diff3 <- variação_selicD [13:24]
+ano3_diff3 <- variação_selicD[25:36]
+ano4_diff3 <- variação_selicD[37:48]
+ano5_diff3 <- variação_selicD[49:60]
+ano6_diff3 <- variação_selicD[61:62]
+
+# criando um data frame com os valores divididos
+valores_diff3 <- data.frame(Selic2011 = ano1_diff3,
+                          Selic2012 = ano2_diff3,
+                          Selic2013 = ano3_diff3,
+                          Selic2014 = ano4_diff3,
+                          Selic2015 = ano5_diff3,
+                          Selic2016 = c(ano6_diff3, " "," "," "," "," "," "," "," "," "," ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff3 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff3) <- nomes_linhas_diff3
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff3) <- c("<b>2011</b>", "<b>2012</b>", "<b>2013</b>", "<b>2014</b>","<b>2015</b>","<b>2016</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff3) <- gsub("Selic", "", colnames(valores_diff3))
+
+# Exibir o data frame
+df_diff3 <- t(valores_diff3)
+knitr::kable(df_diff3,align = "c", caption = "<b>Tabela 9: Selic efetiva menos Selic do modelo ajustado</b>", format = "markdown")
+
+
+
+
+```
+
+
+#### Período 4 (2016.5 até 2018.12)
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ------------------------ Definindo Períodos -----------------------------------
+
+selicT <- window(selic, frequency=12, start=c(2016,5), end=c(2018,12));#selicT;#plot(selicT)
+
+desvioT <- window(desvio, frequency=12, start=c(2016,5), end=c(2018,12));#desvioT;#plot(desvioT)
+
+hiatoT <- window(hiato, frequency=12, start=c(2016,5), end=c(2018,12));#hiatoT;#plot(hiatoT)
+
+
+# ----------------------- Regra de Taylor---------------------------------------
+
+taylorT <- cbind(selicT, desvioT, hiatoT); #taylorT; #plot(taylorT)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ----------------------- Regressão --------------------------------------------
+Taylor4 = lm(selicT ~ desvioT + hiatoT)
+#coef(Taylor4)
+
+#coeftest(Taylor4)
+#summary(Taylor4)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+  # ----------------------- Residuos ---------------------------------------------
+  residuos4 <- residuals(Taylor4)
+
+
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+  jarquebera4 <- jarqueberaTest(residuos4)
+ 
+  shapiro4 <- shapiro.test(residuos4)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+  fraction4 <- length(residuos4) * 0.15
+  
+  gqtest4 <- gqtest(Taylor4, fraction = fraction4, alternative = "greater")
+  
+  bptest4 <- bptest(Taylor4)
+  
+  
+  white_test4 <- white_test(Taylor4)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest4 <- dwtest(Taylor4)
+  
+  ArchTest4 <- ArchTest(residuos4, lags = 4)
+  
+  
+  Box.test4 <- Box.test(residuos4, lag = 12, type = "Box-Pierce")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Exibindo os resultados
+  
+# Criar os dados
+testes_L4 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera4@test$statistic, 4), 
+                  round(shapiro4$statistic, 4), round(gqtest4$statistic, 4),
+                  round(bptest4$statistic, 4), round(white_test4$w_stat, 4),
+                  round(dwtest4$statistic, 4), round(ArchTest4$statistic, 4),
+                  round(Box.test4$statistic, 4)),
+  P_valor = c(round(jarquebera4@test$p.value, 4), round(shapiro4$p.value, 4), 
+              round(gqtest4$p.value, 4), round(bptest4$p.value, 4), 
+              round(white_test4$p_value, 4), round(dwtest4$p.value, 4), 
+              round(ArchTest4$p.value, 4), round(Box.test4$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(testes_L4, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação com os dados originais</b>", format = "html")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+# ----------------------- Regressão --------------------------------------------
+
+lag <- stats::lag
+regressao_diff4 <- dynlm(selicT~diff(desvioT)+diff(hiatoT)+lag(selicT,1)+lag(selicT,2)+lag(selicT,3))
+
+
+#summary(regressao_diff4)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false  
+  # ----------------------- Residuos ---------------------------------------------
+  residuos_diff4<-residuals(regressao_diff4)
+  
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+ 
+  jarquebera_diff4 <- jarqueberaTest(residuos_diff4)
+  
+  shapiro_diff4 <-shapiro.test(residuos_diff4)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+
+  fraction_diff4 <- length(residuos_diff4)*0.15
+  
+  gqtest_diff4<-gqtest(regressao_diff4, fraction=fraction_diff4, alternative = "greater")
+  
+  bptest_diff4<-bptest(regressao_diff4)
+  
+  
+  white_test_diff4 <-white_test(regressao_diff4)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest_diff4 <-dwtest(regressao_diff4)
+  
+  ArchTest_diff4 <-ArchTest(residuos_diff4, lags = 4)
+  
+  
+  Box.test_diff4 <-Box.test(residuos_diff4, lag=12, type="Box-Pierce")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+  # Exibindo os resultados
+# Criar os dados
+test_econ_diff4 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera_diff4@test$statistic, 4), 
+                  round(shapiro_diff4$statistic, 4), round(gqtest_diff4$statistic, 4),
+                  round(bptest_diff4$statistic, 4), round(white_test_diff4$w_stat, 4),
+                  round(dwtest_diff4$statistic, 4), round(ArchTest_diff4$statistic, 4),
+                  round(Box.test_diff4$statistic, 4)),
+  P_valor = c(round(jarquebera_diff4@test$p.value, 4), round(shapiro_diff4$p.value, 4), 
+              round(gqtest_diff4$p.value, 4), round(bptest_diff4$p.value, 4), 
+              round(white_test_diff4$p_value, 4), round(dwtest_diff4$p.value, 4), 
+              round(ArchTest_diff4$p.value, 4), round(Box.test_diff4$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(test_econ_diff4, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação pelo modelo ajustado</b>", format = "html")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+# Executar o modelo
+resultado_diff4 <- summary(regressao_diff4)
+
+# Extrair coeficientes e estatísticas
+coeficientes_diff4 <- resultado_diff4$coefficients[, 1]
+t_stats_diff4 <- resultado_diff4$coefficients[, 3]
+
+# Arredondar coeficientes e estatísticas para 4 casas decimais
+coeficientes_diff4 <- round(coeficientes_diff4, 4)
+t_stats_diff4 <- round(t_stats_diff4, 4)
+R2_diff4 <- round(resultado_diff4$r.squared, 4)
+
+# Criar um data frame com os coeficientes e as estatísticas
+dados_diff4 <- data.frame(
+  
+  Regra_de_Taylor = c("<b>Parâmetros<b>", "<b>t-student<b>", "", ""),
+  
+  Intercepto = c(coeficientes_diff4[1], paste("(", t_stats_diff4[1], ")", sep = ""), 
+                NA, NA),
+  
+  Desvio = c(coeficientes_diff4[2], paste("(", t_stats_diff4[2], ")", sep = ""),
+             NA, NA),
+  
+  Hiato = c(coeficientes_diff4[3], paste("(", t_stats_diff4[3], ")", sep = ""), 
+            NA, NA),
+  
+  SELIC_em_t1 = c(coeficientes_diff4[4], paste("(", t_stats_diff4[4], ")", sep = ""), 
+                 NA, NA),
+  
+  SELIC_em_t2 = c(coeficientes_diff4[5], paste("(", t_stats_diff4[5], ")", sep = ""), NA, NA),
+  
+  SELIC_em_t3 = c(coeficientes_diff4[6], paste("(", t_stats_diff4[6], ")", sep = ""), NA, NA),
+ 
+  R2 = c("", "", paste("(", R2_diff4, ")", sep = ""), NA)
+)
+
+
+
+dados_diff4[is.na(dados_diff4)] <- ""
+# Exibir a tabela
+knitr::kable(dados_diff4, align = "c", caption = "<b>Tabela 10: Parâmetros Estimados pelo modelo ajustado</b>", format = "markdown")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+selicT_lag1 <- lag(selicT, 1)
+selicT_lag2 <- lag(selicT, 2)
+selicT_lag3 <- lag(selicT, 3)
+
+SELICTaylorT <- (coef(regressao_diff4)[1] + coef(regressao_diff4)[2]*desvioT
+                  +coef(regressao_diff4)[3]*hiatoT + coef(regressao_diff4)[4]*selicT_lag1
+                  +coef(regressao_diff4)[5]*selicT_lag2+coef(regressao_diff4)[6]*selicT_lag3)
+SELICTaylorT <- round(SELICTaylorT,2)
+
+
+variação_selicT <- round(selicT - SELICTaylorT, 2)
+ # Dividir os valores em 4 quatro anos 
+ano1_diff4 <- SELICTaylorT[5:12]
+ano2_diff4 <- SELICTaylorT[13:24]
+ano3_diff4 <- SELICTaylorT[25:33]
+
+
+# criando um data frame com os valores divididos
+valores_diff4 <- data.frame(Selic2016 = c(" ", " "," ", " ",ano1_diff4),
+                           Selic2017 = ano2_diff4,
+                           Selic2018 = c(7.65,  7.40,  7.12, 6.96 , 7.03,  6.94,  6.85,  6.70,  6.66, " ", " ", " ")) 
+# Definir os nomes das linhas
+ nomes_linhas_diff4 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+ 
+row.names(valores_diff4) <- nomes_linhas_diff4
+ 
+ # nomeando as colunas com negrito e retire a palavra "Selic"
+ colnames(valores_diff4) <- c("<b>2016</b>", "<b>2017</b>", "<b>2018</b>")
+ 
+ # substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+ colnames(valores_diff4) <- gsub("Selic", "", colnames(valores_diff4))
+ 
+ # Exibir o data frame
+ df_diff4 <- t(valores_diff4)
+ knitr::kable(df_diff4,align = "c", caption = "<b>Tabela 11: Taxa Selic determinada pelo modelo ajustado</b>", format = "markdown")
+ 
+ 
+ #GERANDO TABELA DE VARIAÇÃO
+ 
+ # Dividir os valores em 4 quatro anos 
+ ano1um_diff4 <- variação_selicT[5:12]
+ ano2dois_diff4 <- variação_selicT [13:24]
+ ano3tres_diff4 <- variação_selicT[25:33]
+
+ 
+ # criando um data frame com os valores divididos
+valores_diff4 <- data.frame(Selic2016 = c(" ", " "," ", " ",ano1um_diff4),
+                           Selic2017 = ano2dois_diff4,
+                           Selic2018 = c(-0.75, -0.68, -0.54, -0.56, -0.63, -0.54, -0.45, -0.30, -0.26, " ", " ", " ")) 
+ 
+ # Definir os nomes das linhas
+ nomes_linhas_diff4 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+ 
+row.names(valores_diff4) <- nomes_linhas_diff4
+ 
+ # nomeando as colunas com negrito e retire a palavra "Selic"
+ colnames(valores_diff4) <- c("<b>2016</b>", "<b>2017</b>", "<b>2018</b>")
+ 
+ # substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+ colnames(valores_diff4) <- gsub("Selic", "", colnames(valores_diff4))
+
+ # Exibir o data frame
+ df_diff4 <- t(valores_diff4)
+ knitr::kable(df_diff4,align = "c", caption = "<b>Tabela 12: Selic efetiva menos Selic do modelo ajustado</b>", format = "markdown")
+ 
+
+
+
+
+
+
+```
+
+#### Período 5 (2019 até 2023)
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+# ------------------------ Definindo Períodos -----------------------------------
+
+selicB <- window(selic, frequency=12, start=c(2019,1), end=c(2023,12));#selicB;#plot(selicB)
+
+desvioB <- window(desvio, frequency=12, start=c(2019,1), end=c(2023,12));#desvioB;#plot(desvioB)
+
+hiatoB <- window(hiato, frequency=12, start=c(2019,1), end=c(2023,12));#hiatoB;#plot(hiatoB)
+
+# ----------------------- Regra de Taylor --------------------------------------
+
+taylorB <- cbind(selicB, desvioB, hiatoB); #taylorB; #plot(taylorB)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+# ----------------------- Regressão --------------------------------------------
+
+Taylor5 = lm(selicB ~ desvioB + hiatoB)
+
+
+#coeftest(Taylor5)
+#summary(Taylor5)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+#gerando função para os testes econometricos
+
+
+  
+  # ----------------------- Residuos ---------------------------------------------
+  residuos5 <- residuals(Taylor5)
+ 
+  
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+ 
+  jarquebera5 <- jarqueberaTest(residuos5)
+  
+  
+  shapiro5 <- shapiro.test(residuos5)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+ 
+  fraction5 <- length(residuos5) * 0.15
+  
+  gqtest5 <- gqtest(Taylor5, fraction = fraction5, alternative = "greater")
+  
+  bptest5 <- bptest(Taylor5)
+  
+  white_test5 <- white_test(Taylor5)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest5 <- dwtest(Taylor5)
+  
+  ArchTest5 <- ArchTest(residuos5, lags = 4)
+  
+  Box.test5 <- Box.test(residuos5, lag = 12, type = "Box-Pierce")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Exibindo os resultados
+  
+# Criar os dados
+testes_L5 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera5@test$statistic, 4), 
+                  round(shapiro5$statistic, 4), round(gqtest5$statistic, 4),
+                  round(bptest5$statistic, 4), round(white_test5$w_stat, 4),
+                  round(dwtest5$statistic, 4), round(ArchTest5$statistic, 4),
+                  round(Box.test5$statistic, 4)),
+  P_valor = c(round(jarquebera5@test$p.value, 4), round(shapiro5$p.value, 4), 
+              round(gqtest5$p.value, 4), round(bptest5$p.value, 4), 
+              round(white_test5$p_value, 4), round(dwtest5$p.value, 4), 
+              round(ArchTest5$p.value, 4), round(Box.test5$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(testes_L5, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação com os dados originais</b>", format = "html")
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+# ----------------------- Regressão --------------------------------------------
+
+lag <- stats::lag
+
+
+regressao_diff5 <- dynlm(selicB~diff(desvioB)+diff(hiatoB)+lag(selicB,1)+lag(selicB,2)+lag(selicB,3)+lag(selicB,4))
+
+#summary(regressao_diff5)
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+  
+  # ----------------------- Residuos ---------------------------------------------
+  residuos_diff5<-residuals(regressao_diff5)
+  
+  # ---------------------- Testes de normalidade ---------------------------------
+  
+  
+  jarquebera_diff5 <- jarqueberaTest(residuos_diff5)
+  
+
+  shapiro_diff5 <-shapiro.test(residuos_diff5)
+  
+  
+  # ------------------ Testes de heterocedasticidade -----------------------------
+  
+ 
+  fraction_diff5 <- length(residuos_diff5)*0.15
+  
+  gqtest_diff5<-gqtest(regressao_diff5, fraction=fraction_diff5, alternative = "greater")
+  
+  bptest_diff5<-bptest(regressao_diff5)
+  
+  
+  white_test_diff5 <-white_test(regressao_diff5)
+  
+  #------------------ Testes de autocorrelação -----------------------------------
+  
+  dwtest_diff5 <-dwtest(regressao_diff5)
+  
+  ArchTest_diff5 <-ArchTest(residuos_diff5, lags = 4)
+  
+  
+  Box.test_diff5 <-Box.test(residuos_diff5, lag=12, type="Box-Pierce")
+```
+
+```{r}
+#| echo: false
+#| eval: false
+#| warning: false
+#| message: false
+  
+#------------------------------------------------#
+# PARA EXIBIR OS RESULTADOS COLOQUE #|eval: true #
+#------------------------------------------------#
+
+# Criar os dados
+test_econ_diff5 <- data.frame(
+  Teste = c("Teste de Jarque-Bera ", "Teste de Shapiro-Wilk", "Teste de Goldfeld-Quandt", 
+            "Teste de Breusch-Pagan ", "Teste de White", "Teste de Durbin-Watson",
+            "Teste ARCH ", "Teste Box-Pierce"),
+  Estatistica = c(round(jarquebera_diff5@test$statistic, 4), 
+                  round(shapiro_diff5$statistic, 4), round(gqtest_diff5$statistic, 4),
+                  round(bptest_diff5$statistic, 4), round(white_test_diff5$w_stat, 4),
+                  round(dwtest_diff5$statistic, 4), round(ArchTest_diff5$statistic, 4),
+                  round(Box.test_diff5$statistic, 4)),
+  P_valor = c(round(jarquebera_diff5@test$p.value, 4), round(shapiro_diff5$p.value, 4), 
+              round(gqtest_diff5$p.value, 4), round(bptest_diff5$p.value, 4), 
+              round(white_test_diff5$p_value, 4), round(dwtest_diff5$p.value, 4), 
+              round(ArchTest_diff5$p.value, 4), round(Box.test_diff5$p.value, 4))
+)
+
+
+
+# Exibir a tabela
+
+knitr::kable(test_econ_diff5, align = "l", caption = "<b>Testes de Normalidade, Heterocedasticidade e Autocorrelação pelo modelo ajustado</b>", format = "html")
+
+
+
+
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+# Executar o modelo
+resultado_diff5 <- summary(regressao_diff5)
+
+# Extrair coeficientes e estatísticas
+coeficientes_diff5 <- resultado_diff5$coefficients[, 1]
+t_stats_diff5 <- resultado_diff5$coefficients[, 3]
+
+# Arredondar coeficientes e estatísticas para 4 casas decimais
+coeficientes_diff5 <- round(coeficientes_diff5, 4)
+t_stats_diff5 <- round(t_stats_diff5, 4)
+R2_diff5 <- round(resultado_diff5$r.squared, 4)
+
+# Criar um data frame com os coeficientes e as estatísticas
+dados_diff5 <- data.frame(
+  
+  Regra_de_Taylor = c("<b>Parâmetros<b>", "<b>t-student<b>", "", ""),
+  
+  Intercepto = c(coeficientes_diff5[1], paste("(", t_stats_diff5[1], ")", sep = ""), 
+                NA, NA),
+  
+  Desvio = c(coeficientes_diff5[2], paste("(", t_stats_diff5[2], ")", sep = ""),
+             NA, NA),
+  
+  Hiato = c(coeficientes_diff5[3], paste("(", t_stats_diff5[3], ")", sep = ""), 
+            NA, NA),
+  
+  SELIC_em_t1 = c(coeficientes_diff5[4], paste("(", t_stats_diff5[4], ")", sep = ""), 
+                 NA, NA),
+  
+  SELIC_em_t2 = c(coeficientes_diff5[5], paste("(", t_stats_diff5[5], ")", sep = ""), NA, NA),
+  
+  SELIC_em_t3 = c(coeficientes_diff5[6], paste("(", t_stats_diff5[6], ")", sep = ""), NA, NA),
+  
+  SELIC_em_t4 = c(coeficientes_diff5[7], paste("(", t_stats_diff5[7], ")", sep = ""), NA, NA),
+  
+ 
+  R2 = c("", "", paste("(", R2_diff5, ")", sep = ""), NA)
+)
+
+
+
+dados_diff5[is.na(dados_diff5)] <- ""
+# Exibir a tabela
+knitr::kable(dados_diff5, align = "c", caption = "<b>Tabela 13: Parâmetros Estimados pelo modelo ajustado</b>", format = "markdown")
+```
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+selicB_lag1 <- lag(selicB, 1)
+selicB_lag2 <- lag(selicB, 2)
+selicB_lag3 <- lag(selicB, 3)
+selicB_lag4 <- lag(selicB, 4)
+
+SELICTaylorB <- (coef(regressao_diff5)[1] + coef(regressao_diff5)[2]*desvioB
+                  +coef(regressao_diff5)[3]*hiatoB + coef(regressao_diff5)[4]*selicB_lag1
+                  +coef(regressao_diff5)[5]*selicB_lag2+coef(regressao_diff5)[6]*selicB_lag3
+                  +coef(regressao_diff5)[7]*selicB_lag4)
+
+SELICTaylorB <- round(SELICTaylorB,2)
+
+
+variação_selicB <- round(selicB - SELICTaylorB, 2)
+
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff5 <- SELICTaylorB[1:12]
+ano2_diff5 <- SELICTaylorB[13:24]
+ano3_diff5 <- SELICTaylorB[25:36]
+ano4_diff5 <- SELICTaylorB[37:45]
+
+# criando um data frame com os valores divididos
+valores_diff5 <- data.frame(Selic2019 = ano1_diff5,
+                          Selic2020 = ano2_diff5,
+                          Selic2021 = ano3_diff5,
+                          Selic2022 = c(ano4_diff5, "  ", "  ", "   ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff5 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff5) <- nomes_linhas_diff5
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff5) <- c("<b>2019</b>", "<b>2020</b>", "<b>2021</b>", "<b>2022</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff5) <- gsub("Selic", "", colnames(valores_diff5))
+
+# Exibir o data frame
+df_diff5 <- t(valores_diff5)
+knitr::kable(df_diff5,align = "c", caption = "<b>Tabela 14: Taxa Selic determinada pelo modelo ajustado</b>", format = "markdown")
+
+
+#GERANDO TABELA DE VARIAÇÃO
+
+# Dividir os valores em 4 quatro anos 
+ano1_diff5 <- variação_selicB[1:12]
+ano2_diff5 <- variação_selicB [13:24]
+ano3_diff5 <- variação_selicB[25:36]
+ano4_diff5 <- variação_selicB[37:45]
+
+# criando um data frame com os valores divididos
+valores_diff5 <- data.frame(Selic2019 = ano1_diff5,
+                          Selic2020 = ano2_diff5,
+                          Selic2021 = ano3_diff5,
+                          Selic2022 = c(ano4_diff5, "  ", "  ", "   ")) 
+# Definir os nomes das linhas
+nomes_linhas_diff5 <- c("<b>Jan</b>", "<b>Fev</b>", "<b>Mar</b>", "<b>Abr</b>", "<b>Mai</b>", "<b>Jun</b>", "<b>Jul</b>", "<b>Ago</b>", "<b>Set</b>", "<b>Out</b>", "<b>Nov</b>", "<b>Dez</b>")
+
+row.names(valores_diff5) <- nomes_linhas_diff5
+
+# nomeando as colunas com negrito e retire a palavra "Selic"
+colnames(valores_diff5) <- c("<b>2019</b>", "<b>2020</b>", "<b>2021</b>", "<b>2022</b>")
+
+# substituindo a palavra "Selic" por uma string vazia nos nomes das colunas
+colnames(valores_diff5) <- gsub("Selic", "", colnames(valores_diff5))
+
+# Exibir o data frame
+df_diff5 <- t(valores_diff5)
+knitr::kable(df_diff5,align = "c", caption = "<b>Tabela 15: Selic efetiva menos Selic do modelo ajustado</b>", format = "markdown")
+
+
+
+
+```
+
+Durante todos os períodos analisados, os testes econométricos revelaram que os dados originais não atendiam aos pressupostos fundamentais do Método dos Quadrados Mínimos Ordinários (MQO), incluindo normalidade, homocedasticidade e ausência de autocorrelação. Essas violações indicam uma fragilidade nos dados e uma ineficiência que comprometem nosso objetivo analítico. Consequentemente, os modelos construídos com base nos dados originais mostraram-se inadequados para a análise durante esses períodos. Diante disso, foram adotadas medidas corretivas, incluindo a diferenciação do hiato do produto e do desvio da inflação, além de defasagens na taxa Selic, visando à melhoria da eficiência e robustez dos resultados. Com base nisso, podemos concluir que os modelos utilizados apresentaram melhorias significativas após os ajustes. Os resultados dos testes indicam que os dados ajustados exibem uma distribuição mais próxima da normalidade, homocedasticidade e ausênvcia de autocorrelação residual em comparação com os dados originais.
+
+Os dados apresentados nas tabelas 1, 4, 7, 10 e 13 revelam-se significativos na análise da política monetária ao longo de diferentes períodos. A significância dos coeficientes estimados oferece uma base sólida para entender como fatores como atividade econômica afetam as decisões sobre a taxa SELIC. Uma característica notável desses dados é a consistência entre a taxa SELIC efetiva e a taxa SELIC estimada pelo modelo ajustado. A variação comparativamente baixa entre esses valores sugere que o modelo ajustado foi eficiente em prever as decisões de política monetária tomadas pelo Banco Central. Essa coerência demonstra que o modelo utilizado neste estudo se aproximou do modelo empregado pelo Banco Central para embasar suas decisões, oferecendo uma representação da dinâmica da taxa SELIC ao longo dos períodos analisados. Nas tabelas 3, 6, 9, 12 e 15 podemos fazer a análise das variações entre a taxa SELIC efetiva e a taxa SELIC do modelo ajustado ao longo do tempo revela padrões claros nas políticas monetárias implementadas pelo Banco Central. Por exemplo, nos períodos em que a taxa SELIC efetiva superou a taxa SELIC calculada, indica-se uma postura contracionista da política monetária, com o Banco Central buscando conter a inflação e reduzir a liquidez na economia. Por outro lado, quando a taxa SELIC efetiva ficou abaixo da taxa SELIC calculada, sugere-se uma política monetária expansionista, visando impulsionar a atividade econômica.
+
+Portanto, a análise detalhada desses dados permite não apenas compreender as políticas monetárias adotadas pelo Banco Central ao longo dos períodos estudados, mas também identificar padrões e mudanças nas estratégias de política monetária em resposta às condições econômicas e aos desafios enfrentados pela economia brasileira.
+
+
+
+##### Referências
+
+Diniz, A. S., & Maia, S. F. (2018). "Teste Econométrico do Regime de Metas de Inflação para o Brasil: 2003-2017".
+
+TAYLOR, J. B. (1993). "Discretion versus policy rules in practice".
+
+TAYLOR, J. B. (1998). "A historical analysis of monetary policy rules".
+
+De Paula, R. M., & Vieira, E. B. (2022). "Regra de Taylor e Política Monetária: evidências para o Brasil após a implantação do Regime de Metas de Inflação."
+
